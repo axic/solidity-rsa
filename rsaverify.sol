@@ -28,6 +28,8 @@ paddingScheme:
 
 pragma solidity ^0.4.1;
 
+import "./Memory.sol";
+
 library BytesTool {
     function memset(bytes input, uint offset, uint length, byte value) internal {
     }
