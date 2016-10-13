@@ -88,9 +88,7 @@ library RSAVerify {
     }
 
     // This is based on ERC101, but optimised for RSA (e=65537)
-    function bigmulmod (bytes B, uint E, bytes M)  returns (bool _ret, bytes _val) {
-        bool ret;
-        bytes memory val;
+    function bigmulmod (bytes B, uint E, bytes M)  returns (bool ret, bytes val) {
         uint Blen = B.length;
         uint Mlen = M.length;
         assembly {
@@ -102,7 +100,7 @@ library RSAVerify {
             mempos := add(mempos, 32)
 
             // memcpy B
-            pop(call(add(15, mul(Blen, 5)), 4, 0, add(B, 32), Blen, mempos, Blen))
+            jumpi(call(add(15, mul(Blen, 5)), 4, 0, add(B, 32), Blen, mempos, Blen), error)
             mempos := add(mempos, Blen)
 
             // store Elen (32) as uint256
@@ -118,7 +116,7 @@ library RSAVerify {
             mempos := add(mempos, 32)
 
             // memcpy M
-            pop(call(add(15, mul(Mlen, 5)), 4, 0, add(M, 32), Mlen, mempos, Mlen))
+            jumpi(call(add(15, mul(Mlen, 5)), 4, 0, add(M, 32), Mlen, mempos, Mlen), error)
             mempos := add(mempos, Mlen)
 
             // total amount written
@@ -133,15 +131,19 @@ library RSAVerify {
             val := memstart
 
             // call MODEXP precompile
-            ret := call(gas, 9, 0, memstart, len, add(val, 32), Mlen)
+            jumpi(call(gas, 9, 0, memstart, len, add(val, 32), Mlen), error)
 
             // set the expected length, but since it shares the input memory
             // it cannot be done before the call
             mstore(val, Mlen)
-        }
 
-        _ret = ret;
-        _val = val;
+            jump(success)
+        error:
+            ret := 0
+
+        success:
+            ret := 1
+        }
     }
 
     function rsaverify(bytes msg, bytes N, uint e, bytes S, uint paddingScheme) returns (bool) {
