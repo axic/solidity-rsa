@@ -127,13 +127,13 @@ library RSAVerify {
             // this feels a bit complex
             let words := mul(div(add(len, 31), 32), 6)
             let complexity := div(mul(Blen, mul(Mlen, 32)), 32)
-            let gas := add(45, add(words, complexity))
+            let gasleft := add(45, add(words, complexity))
 
             // NOTE: response will overwrite the request
             val := memstart
 
             // call MODEXP precompile
-            jumpi(call(gas, 9, 0, memstart, len, add(val, 32), Mlen), error)
+            jumpi(call(gasleft, 9, 0, memstart, len, add(val, 32), Mlen), error)
 
             // set the expected length, but since it shares the input memory
             // it cannot be done before the call
